@@ -1,6 +1,5 @@
 ---
-title: "regmods-030 project"
-author: "justin harding"
+author: "regmods-030 - justin harding"
 date: "21 July 2015"
 output: pdf_document
 ---
@@ -12,8 +11,6 @@ library(car)
 
 ```{r echo=FALSE}
 fit.wt.hp.am <- lm(mpg ~ wt + hp + factor(am) + factor(am)*wt, mtcars)
-
-summary(fit.wt.hp.am)$coef
 ```
 
 ## Executive Summary
@@ -24,7 +21,7 @@ From the supplied data set of a collection of cars, we are interested in explori
 
 The conclusion reached from the data given is that there is no significant statistical difference between fuel consumption of manual and automatic transmission for the average vehicle.
 
-Further investigation shows that there is a difference in fuel consumption across the range of vehicles. For cars that weigh less/have less horspower, automatic transmission gives better fuel consumption. For cars that weigh more/have more power, manual transmission is better. So for example
+However further investigation shows that automatic transmission gives better fuel consumption cars that weigh less/have less horspower and manual transmission is better for cars that weigh more/have more power. Summarised in the following table.
 
 weight|hp|trans|min mpg|max mpg
 ------|--|-----|-------|-------
@@ -35,95 +32,104 @@ weight|hp|trans|min mpg|max mpg
 
 
 ## Procedure
-Rmd file can be found at <<github>>
+The Rmd file used to generate this document can be found at https://github.com/justinharding/regmods-030_project.git
+I have left out large amounts of information I used for this project to pare down to 5 pages. I hope what I have left still makes sense!
 
-```{r, echo = FALSE}
+Our null hypothesis H~0~ : mpg(man) = mpg(auto)
+
+First we create a fit to test all of the adjusted models.
+```{r}
 fit <- lm(mpg ~ ., mtcars)
 ```
 
-From the scatterplots in the appendix, it appears the predictors most correlated wth _mpg_ (miles per gallon) are _wt_ (weight), _cyl_ (no. cylinders), _disp_ (displacement), and _hp_ (horsepower). In the adjusted fits `lm(mpg ~ ., mtcars)`, only _wt_ was even slightly correlated after effects of all other fits were taken out of predictor and outcome. We will try a few models.
+Scatterplots can be generated using the _pairs_ routine (output not included to save space). It appears the predictors most correlated wth _mpg_ (miles per gallon) are _wt_ (weight), _cyl_ (no. cylinders), _disp_ (displacement), and _hp_ (horsepower). In the [adjusted fits] in the appendix from this model `lm(mpg ~ ., mtcars)`, only _wt_ was even slightly correlated after effects of all other fits were taken out of predictor and outcome. We will try the models in the table below. A sample summary from one of the models can be found in the appendix. Summary from all models is not included. The reader is invited to create these summaries.
 
-First `lm(mpg ~ wt, mtcars)`.
+fit.wt|fit.wt.hp|fit.wt.hp.cyl|fit.wt.hp.disp
+------|---------|-------------|--------------
+`mpg ~ wt`|`mpg ~ wt + hp`|`mpg ~ wt + hp + cyl`|`mpg ~ wt + hp + disp`
 
-```{r, echo = FALSE}
+```{r echo = FALSE}
 fit.wt <- lm(mpg ~ wt, mtcars)
-summary(fit.wt)$coef
-```
-Add _hp_ `lm(mpg ~ wt + hp, mtcars)`.
-
-```{r, echo = FALSE}
 fit.wt.hp <- update(fit, mpg ~ wt + hp)
-summary(fit.wt.hp)$coef
-```
-And _cyl_ `lm(mpg ~ wt + hp + cyl, mtcars)`.
-```{r, echo = FALSE}
 fit.wt.hp.cyl <- update(fit, mpg ~ wt + hp + cyl)
-summary(fit.wt.hp.cyl)$coef
-```
-
-Or perhaps _disp_ `lm(mpg ~ wt + hp + disp, mtcars)`.
-```{r, echo = FALSE}
 fit.wt.hp.disp <- update(fit, mpg ~ wt + hp + disp)
-summary(fit.wt.hp.disp)$coef
 ```
 
-Both _cyl_ and _disp_ do not add anything useful to the model. An excerpt from the correlation matrix shows us that they are both quite highly correlated with existing terms.
+From the output in the appendix both _cyl_ and _disp_ do not add anything useful to the model. An excerpt from the correlation matrix shows us that they are both quite highly correlated with existing terms.
 ```{r, echo = FALSE}
 cor(mtcars)[c(4,6),c(1:6)]
 ```
-Comparing the models with `anova` shows us also that the extras terms do not help.
+Output from [anova] in the appendix shows us also that the extras terms do not help. We could also use vif to test this (but space constraints mean we won't!).
 
+Our best model appears to be `fit.wt.hp <- lm(mpg ~ wt + hp, mtcars)`.
+
+The [residuals] plot in the appendix shows that the residuals appear to be uncorrelated.  The quantile plot shows that there are issues with the data. Fiat 128, Toyota Corolla and Chrysler Imperial are all quite a way off the normal. This can also be seen from the dfbetas output. The hatvalues plot shows us that the Maserati Bora is well off the normal.
+
+Now consider the effect of transmission type. See [transmission summary] in the appendix. 
 ```{r, echo = FALSE}
-anova(fit.wt, fit.wt.hp, fit.wt.hp.cyl)
-anova(fit.wt, fit.wt.hp, fit.wt.hp.disp)
+fit.wt.hp.am.same.slope <- lm(mpg ~ wt + hp + factor(am), mtcars)
 ```
 
-vif confirms this
-```{r}
-sqrt(vif(fit.wt.hp.cyl))
-sqrt(vif(fit.wt.hp.disp))
-sqrt(vif(fit.wt.hp))
+## Conclusion
+
+From the model `lm(mpg ~ wt + hp + factor(am))` for _factor(am)1_, we have confidence interval of `r round(confint(fit.wt.hp.am.same.slope)[4,1], 3)` to  `r round(confint(fit.wt.hp.am.same.slope)[4,2], 3)` and we have a p value greater than 0.05 which means we **cannot** rule out the null hypothesis. This in turn means we cannot rule out the possibility that transmission type has no effect on fuel consumption.
+
+
+```{r echo=FALSE}
+fit.wt.hp.am <- lm(mpg ~ wt + hp + factor(am) + factor(am)*wt, mtcars)
 ```
 
-So we will use `fit.wt.hp <- lm(mpg ~ wt + hp, mtcars)` as our model
+However if we allow our models to have different slopes, manual cars and automatic cars do have different characteristics. Manual cars have fuel consumption of `r fit.wt.hp.am$coef[1]` `+` `r fit.wt.hp.am$coef[2]` `* wt +` `r fit.wt.hp.am$coef[3]` `* hp` and automatic cars have fuel consumption of `r fit.wt.hp.am$coef[1] + fit.wt.hp.am$coef[4]` `+ (` `r fit.wt.hp.am$coef[2] + fit.wt.hp.am$coef[5]` `) * wt + ` `r fit.wt.hp.am$coef[3]` ` * hp`
 
-The residuals density plot and quantile plot both show that there are issues with the data. Fiat 128, Toyota Corolla and Chrysler Imperial are all quite a way off the normal. This can also be seen from `dfbetas(fit.wt.hp)`. The `hatvalues(fit.wt.hp)` plot shows us that the Maserati Bora is well off the normal.
-```{r}
-plot(density(resid(fit.wt.hp)))
-plot(fit.wt.hp, which = 2)
+## Appendix
+Note: I assume that tables can be considered as figures for inclusion in Appendix.
+
+[scatterplots]: #scatterplots
+coefficients for model mpg ~ .
+```{r, echo=FALSE}
+kable(summary(fit)$coef, booktabs = TRUE)
+```
+
+[fit summaries]: #fitsummaries
+coefficients for model mpg ~ wt + hp + disp
+```{r, echo = FALSE}
+kable(summary(fit.wt.hp.disp)$coef, booktabs = TRUE)
+```
+
+[anova]: #anova
+`anova(fit.wt, fit.wt.hp, fit.wt.hp.cyl)`
+```{r, echo = FALSE}
+anova(fit.wt, fit.wt.hp, fit.wt.hp.cyl)[1:5]
+```
+`anova(fit.wt, fit.wt.hp, fit.wt.hp.disp)`
+```{r, echo = FALSE}
+anova(fit.wt, fit.wt.hp, fit.wt.hp.disp)[1:5]
+```
+
+[residuals]: residuals
+residuals plot
+```{r, echo=FALSE}
+par(cex = 0.5)
+plot(resid(fit.wt.hp))
+```
+
+excerpt from dfbetas
+```{r, echo=FALSE}
 round(dfbetas(fit.wt.hp)[15:23,], 3)
-round(hatvalues(fit.wt.hp), 3)
+plot(fit.wt.hp, which = 2)
+```
+
+```{r, echo=FALSE}
 plot(hatvalues(fit.wt.hp))
 ```
 
-Now consider the effect of transmission type.
+[transmission summary]: #transmissionsummary
 ```{r}
-fit.wt.hp.am.same.slope <- lm(mpg ~ wt + hp + factor(am), mtcars)
-summary(fit.wt.hp.am.same.slope)
+summary(fit.wt.hp.am.same.slope)$coef
+summary(fit.wt.hp.am)$coef
 ```
 
-From the model `lm(mpg ~ wt + hp + factor(am))` looking at the line for factor(am)1, we have confidence interval of `r round(confint(fit.wt.hp.am.same.slope)[4,1], 3)` to  `r round(confint(fit.wt.hp.am.same.slope)[4,2], 3)` and we have a p value greater than 0.05 which means we cannot rule out the NULL hypothesis. This in turn means we cannot rule out the possibility that transmission type has no effect on fuel consumption.
 
-```{r}
-fit.wt.hp.am <- lm(mpg ~ wt + hp + factor(am) + factor(am)*wt, mtcars)
-summary(fit.wt.hp.am)
-plot(mtcars$wt, mtcars$mpg, pch = 19)
-points(mtcars$wt, mtcars$mpg, pch = 19, col = ((mtcars$am==1) * 1 + 1))
-abline(c(fit.wt.hp.am$coef[1], fit.wt.hp.am$coef[2]), col="black", lwd=3)
-abline(c(fit.wt.hp.am$coef[1] + fit.wt.hp.am$coef[4], fit.wt.hp.am$coef[2] + fit.wt.hp.am$coef[5]), col="red", lwd=3)
-```
-
-If we allow our models to have different slopes, it does looks like manual cars and automatic cars do have different characteristics though. Manual cars have fuel consumption of `r fit.wt.hp.am$coef[1]` `+` `r fit.wt.hp.am$coef[2]` `* wt +` `r fit.wt.hp.am$coef[3]` `* hp` and automatic cars have fuel consumption of `r fit.wt.hp.am$coef[1] + fit.wt.hp.am$coef[4]` `+ (` `r fit.wt.hp.am$coef[2] + fit.wt.hp.am$coef[5]` `) * wt + ` `r fit.wt.hp.am$coef[3]` ` * hp`
-
-*** Appendix
-Note: Assuming tables can be considered figures for inclusion in Appendix.
-
-[pairs]:
-```{r}
-pairs(mtcars)
-kable(summary(fit)$coef, booktabs = TRUE)
-
-```
 Correlation Matrix
 ```{r}
 cor(mtcars)
