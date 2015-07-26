@@ -1,6 +1,6 @@
 ---
 author: "regmods-030 - justin harding"
-date: "21 July 2015"
+date: "26 July 2015"
 output: pdf_document
 ---
 ```{r setup, cache = F, echo = F, message = F, warning = F, tidy = F, results='hide'}
@@ -36,13 +36,20 @@ The Rmd file used to generate this document can be found at https://github.com/j
 I have left out large amounts of information I used for this project to pare down to 5 pages. I hope what I have left still makes sense!
 
 Our null hypothesis H~0~ : mpg(man) = mpg(auto)
+and our alternate hypothesis H~a~ : mpg(man) != mpg(auto)
 
-First we create a fit to test all of the adjusted models.
-```{r}
+
+First check the data using `str(mtcars)`
+```{r, echo=FALSE}
+str(mtcars)
+```
+
+Then we create a fit to test all of the adjusted models using `lm(mpg ~ ., mtcars)`.
+```{r, echo = FALSE}
 fit <- lm(mpg ~ ., mtcars)
 ```
 
-Scatterplots can be generated using the _pairs_ routine (output not included to save space). It appears the predictors most correlated wth _mpg_ (miles per gallon) are _wt_ (weight), _cyl_ (no. cylinders), _disp_ (displacement), and _hp_ (horsepower). In the [adjusted fits] in the appendix from this model `lm(mpg ~ ., mtcars)`, only _wt_ was even slightly correlated after effects of all other fits were taken out of predictor and outcome. We will try the models in the table below. A sample summary from one of the models can be found in the appendix. Summary from all models is not included. The reader is invited to create these summaries.
+From the scatterplots generated using `pairs(mtcars)` (output in appendix), it appears the predictors most correlated wth _mpg_ (miles per gallon) are _wt_ (weight), _cyl_ (no. cylinders), _disp_ (displacement), and _hp_ (horsepower). In the [adjusted fits] in the appendix from this model `lm(mpg ~ ., mtcars)`, only _wt_ was even slightly correlated after effects of all other fits were taken out of predictor and outcome. We will try the models in the table below. Summaries from models can be found in the appendix.
 
 fit.wt|fit.wt.hp|fit.wt.hp.cyl|fit.wt.hp.disp
 ------|---------|-------------|--------------
@@ -59,7 +66,14 @@ From the output in the appendix both _cyl_ and _disp_ do not add anything useful
 ```{r, echo = FALSE}
 cor(mtcars)[c(4,6),c(1:6)]
 ```
-Output from [anova] in the appendix shows us also that the extras terms do not help. We could also use vif to test this (but space constraints mean we won't!).
+Output from [anova] in the appendix shows us also that the extras terms do not help. Output from vif follows. I have concatenated the outputs to save space.
+
+`sqrt(vif(fit.wt.hp.cyl))`
+`sqrt(vif(fit.wt.hp.disp))`
+`sqrt(vif(fit.wt.hp))`
+```{r, echo = FALSE}
+c(sqrt(vif(fit.wt.hp.cyl)), sqrt(vif(fit.wt.hp.disp)), sqrt(vif(fit.wt.hp)))
+```
 
 Our best model appears to be `fit.wt.hp <- lm(mpg ~ wt + hp, mtcars)`.
 
@@ -84,53 +98,54 @@ However if we allow our models to have different slopes, manual cars and automat
 ## Appendix
 Note: I assume that tables can be considered as figures for inclusion in Appendix.
 
-[scatterplots]: #scatterplots
-coefficients for model mpg ~ .
+**Scatter Plots**
+```{r, echo=FALSE}
+pairs(mtcars)
+```
+
+**Correlation Matrix**
+```{r}
+cor(mtcars)
+```
+
+**Coefficients for model `mpg ~ .`**
 ```{r, echo=FALSE}
 kable(summary(fit)$coef, booktabs = TRUE)
 ```
 
-[fit summaries]: #fitsummaries
-coefficients for model mpg ~ wt + hp + disp
+**Coefficients for models `mpg ~ wt, mpg ~ wt + hp, mpg ~ wt + hp + disp, mpg ~ wt + hp + cyl`**
 ```{r, echo = FALSE}
+kable(summary(fit.wt)$coef, booktabs = TRUE)
+kable(summary(fit.wt.hp)$coef, booktabs = TRUE)
 kable(summary(fit.wt.hp.disp)$coef, booktabs = TRUE)
+kable(summary(fit.wt.hp.cyl)$coef, booktabs = TRUE)
 ```
 
-[anova]: #anova
-`anova(fit.wt, fit.wt.hp, fit.wt.hp.cyl)`
+**Anovas `anova(fit.wt, fit.wt.hp, fit.wt.hp.cyl)` and `anova(fit.wt, fit.wt.hp, fit.wt.hp.disp)`**
 ```{r, echo = FALSE}
 anova(fit.wt, fit.wt.hp, fit.wt.hp.cyl)[1:5]
-```
-`anova(fit.wt, fit.wt.hp, fit.wt.hp.disp)`
-```{r, echo = FALSE}
 anova(fit.wt, fit.wt.hp, fit.wt.hp.disp)[1:5]
 ```
 
-[residuals]: residuals
-residuals plot
+**Residuals Plots**
 ```{r, echo=FALSE}
 par(cex = 0.5)
+par(mfrow=c(2,2))
 plot(resid(fit.wt.hp))
+plot(density(resid(fit.wt.hp)))
 ```
 
-excerpt from dfbetas
+**Excerpt from dfbetas and the hatvalues plot**
 ```{r, echo=FALSE}
 round(dfbetas(fit.wt.hp)[15:23,], 3)
+par(mfrow=c(2,2))
 plot(fit.wt.hp, which = 2)
-```
-
-```{r, echo=FALSE}
 plot(hatvalues(fit.wt.hp))
 ```
 
-[transmission summary]: #transmissionsummary
-```{r}
+**Models including transmission**
+mpg ~ wt + hp + factor(am) and mpg ~ wt + hp + factor(am) + factor(am)*wt
+```{r, echo = FALSE}
 summary(fit.wt.hp.am.same.slope)$coef
 summary(fit.wt.hp.am)$coef
-```
-
-
-Correlation Matrix
-```{r}
-cor(mtcars)
 ```
