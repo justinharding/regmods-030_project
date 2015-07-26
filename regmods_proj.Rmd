@@ -21,10 +21,10 @@ From the supplied data set of a collection of cars, we are interested in explori
 
 The conclusion reached from the data given is that there is no significant statistical difference between fuel consumption of manual and automatic transmission for the average vehicle.
 
-However further investigation shows that automatic transmission gives better fuel consumption cars that weigh less/have less horspower and manual transmission is better for cars that weigh more/have more power. Summarised in the following table.
+However further investigation shows that automatic transmission gives better fuel consumption cars that weigh less/have less horspower and manual transmission is better for cars that weigh more/have more power, although there is a very wide variation between min and max mpg values in our models. Summarised in the following table.
 
-weight|hp|trans|min mpg|max mpg
-------|--|-----|-------|-------
+weight|hp|trans|min mpg (conf interval 95%)|max mpg (conf interval 95%)
+------|--|-----|---------------------------|---------------------------
 2000lb|70|man|`r round(fit.wt.hp.am$coef[1] + fit.wt.hp.am$coef[2] * 2 + fit.wt.hp.am$coef[3] * 70 - 2 * summary(fit.wt.hp.am)$sigma, 2)`|`r round(fit.wt.hp.am$coef[1] + fit.wt.hp.am$coef[2] * 2 + fit.wt.hp.am$coef[3] * 70 + 2 * summary(fit.wt.hp.am)$sigma, 2)`
 2000lb|70|auto|`r round(fit.wt.hp.am$coef[1] + fit.wt.hp.am$coef[4] + (fit.wt.hp.am$coef[2] + fit.wt.hp.am$coef[5]) * 2 + fit.wt.hp.am$coef[3] * 70 - 2 * summary(fit.wt.hp.am)$sigma, 2)`|`r round(fit.wt.hp.am$coef[1] + fit.wt.hp.am$coef[4] + (fit.wt.hp.am$coef[2] + fit.wt.hp.am$coef[5]) * 2 + fit.wt.hp.am$coef[3] * 70 + 2 * summary(fit.wt.hp.am)$sigma, 2)`
 4000lb|140|man|`r round(fit.wt.hp.am$coef[1] + fit.wt.hp.am$coef[2] * 4 + fit.wt.hp.am$coef[3] * 140 - 2 * summary(fit.wt.hp.am)$sigma, 2)`|`r round(fit.wt.hp.am$coef[1] + fit.wt.hp.am$coef[2] * 4 + fit.wt.hp.am$coef[3] * 140 + 2 * summary(fit.wt.hp.am)$sigma, 2)`
